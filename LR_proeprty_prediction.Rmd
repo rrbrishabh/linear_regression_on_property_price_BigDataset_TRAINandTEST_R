@@ -1,0 +1,477 @@
+---
+title: "Property_Prediction_LR"
+
+output: html_document
+---
+
+### Problem Statement 
+## There are a number of factors which determine property prices, some are logical, based on economic theories and population density and some are based on more intangible factors, like availability of amenities & necessities, neighborhood, etc. Build a linear regression model to predict the price of the property from the dataset having attributes such as sale type, sale condition etc. 
+
+## First we load the Dataset, read.CSV library for load CSV files. in this Data having two dataset one is Training and another is Test
+
+```{r }
+
+getwd()
+library(readr)
+
+Train <- read_csv("Property_Price_Train.csv")
+Test <- read_csv("Property_Price_Test.csv")
+
+```
+## after the load the data in variable then we seen the head of the dataset from ("head") command
+
+```{r}
+par(mfrow = c(1,2))
+head(Train)
+head(Test)
+
+```
+
+## after seen the variable column we see both dataframe have two repitative column ID so we didn't need these column so we remove these column from both dataframe (Test, Train)
+
+
+```{r pressure, echo=FALSE}
+Test$Id <- NULL
+Train$Id <- NULL
+
+par(mfrow = c(1,2))
+head(Test)
+head(Train)
+
+
+```
+
+## as i See both table have same columns so we merge the both table, but as seen test dataset have 79 columns and train dataset have 80 column train dataset have extra Sales_Price column (we predict this column with the modal) so we create an column in test datset. and check both table have same number of columns because we did not merge both if anyone have less columns. with the help of dim function.
+
+```{r}
+
+Test$Sale_Price <- NA
+
+par(mfrow = c(1,2))
+head(Test)
+head(Train)
+
+dim(Test)
+dim(Train)
+
+
+
+```
+
+## So as we seen both having same columns so we merge the datset in one Data frame. with the help of (rbind function ) is working with row wise after that we see over data with the help of (View Function) its help to show our dataset in table form.
+
+```{r}
+
+all <- rbind(Train, Test)
+
+dim(all)
+str(all)
+head(all)
+
+
+```
+
+# Checking NA values in merge new table All. 
+
+``` {r}
+
+par(mfrow = c(1,2))
+
+!colSums(is.na(all))
+colSums(is.na(all))
+
+
+```
+## again chacking with another method for NA values
+
+```{r}
+columns_with_missing_values <- sapply(all, function(x) sum(is.na(x)))
+columns_with_missing_values
+
+```
+
+## missing value treatment
+## class function for check the datatype
+### filling Na with "No Access"
+
+```{r}
+all$Lane_Type <- as.character(all$Lane_Type)
+class(all$Lane_Type)
+all$Lane_Type[is.na(all$Lane_Type)] <- "No Access"
+
+```
+
+## basement height with "NO basement"
+### Change the factor class type to character class first 
+### Filling NA with No Basement
+
+```{r}
+all$Basement_Height <- as.character(all$Basement_Height)
+all$Basement_Height[is.na(all$Basement_Height)] <- "No Basement"
+all$Basement_Condition <- as.character(all$Basement_Condition) 
+
+all$Basement_Condition[is.na(all$Basement_Condition)] <- "No Basement"
+str(all)
+
+```
+
+## Replacing NA values with 'No Basement' for Exposure_Level variable 
+### Check the class of the variable Exposure_Level 
+### Change the factor class type to character class first
+### Filling NA with No Basement 
+```{r}
+
+
+class(all$Exposure_Level) 
+all$Exposure_Level <- as.character(all$Exposure_Level) 
+all$Exposure_Level[is.na(all$Exposure_Level)] <- "No Basement"
+
+```
+
+## Replacing NA values with 'No Basement' for BsmtFinType1 variable 
+### Check the class of the variable BsmtFinType1 
+### Change the factor class type to character class first 
+### Filling NA with No Basement 
+
+```{r}
+class(all$BsmtFinType1) 
+all$BsmtFinType1 <- as.character(all$BsmtFinType1)
+all$BsmtFinType1[is.na(all$BsmtFinType1)] <- "No Basement"
+
+```
+
+## Replacing NA values with 'No Basement' for BsmtFinType2 variable 
+### Check the class of the variable BsmtFinType2 
+### Change the factor class type to character class first 
+### Filling NA with No Basement 
+
+```{r}
+class(all$BsmtFinType2) 
+all$BsmtFinType2 <- as.character(all$BsmtFinType2)
+all$BsmtFinType2[is.na(all$BsmtFinType2)] <- "No Basement"
+
+```
+
+## Replacing NA values with 'No Fireplace' for Fireplace_Quality variable
+### Check the class of the variable Fireplace_Quality 
+### Change the factor class type to character class firs
+### Filling NA with No Fireplace 
+
+
+```{r}
+
+class(all$Fireplace_Quality) 
+all$Fireplace_Quality <- as.character(all$Fireplace_Quality) 
+all$Fireplace_Quality[is.na(all$Fireplace_Quality)] <- "No Fireplace"
+
+```
+
+## Replacing NA values with 'No garage' for Garage variable 
+### Check the class of the variable Garage 
+
+### Change the factor class type to character class first 
+ 
+### Filling NA with No Garage 
+
+
+
+```{r}
+
+class(all$Garage) 
+
+all$Garage <- as.character(all$Garage)
+all$Garage[is.na(all$Garage)] <- "No Garage"
+```
+
+## Replacing NA values with '0' for Garage_Built_Year variable 
+### Check the class of the variable Garage_Built_Year 
+### Change the factor class type to character class first 
+### Filling NA with 0 
+
+
+```{r}
+
+class(all$Garage_Built_Year) 
+all$Garage_Built_Year[is.na(all$Garage_Built_Year)] <- 0
+
+```
+
+## Replacing NA values with 'No Garage' for Garage_Finish_Year variable 
+### Check the class of the variable Garage_Finish_Year 
+### Change the factor class type to character class first 
+### Filling NA with No Garage 
+
+
+```{r}
+class(all$Garage_Finish_Year) 
+all$Garage_Finish_Year <- as.character(all$Garage_Finish_Year) 
+all$Garage_Finish_Year[is.na(all$Garage_Finish_Year)] <- "No Garage"
+```
+
+## Replacing NA values with 'No Garage' for Garage_Quality variable 
+### Check the class of the variable Garage_Quality 
+### Change the factor class type to character class first 
+### Filling NA with No Garage 
+
+
+```{r}
+class(all$Garage_Quality)
+all$Garage_Quality <- as.character(all$Garage_Quality) 
+all$Garage_Quality[is.na(all$Garage_Quality)] <- "No Garage"
+
+```
+
+##Replacing NA values with 'No Garage' for Garage_Condition variable 
+### Check the class of the variable Garage_Condition 
+
+### Change the factor class type to character class first 
+
+### Filling NA with No Garage 
+
+
+```{r}
+class(all$Garage_Condition) 
+all$Garage_Condition <- as.character(all$Garage_Condition)
+all$Garage_Condition[is.na(all$Garage_Condition)] <- "No Garage"
+
+```
+
+
+## Replacing NA values with 'No Pool' for Pool_Quality variable 
+### Check the class of the variable Pool_Quality 
+
+### Change the factor class type to character class first 
+ 
+### Filling NA with No Pool 
+
+
+
+```{r}
+
+class(all$Pool_Quality) 
+all$Pool_Quality <- as.character(all$Pool_Quality)
+all$Pool_Quality[is.na(all$Pool_Quality)] <- "No Pool"
+```
+
+## Replacing NA values with 'No Fence' for Fence_Quality variable 
+### Check the class of the variable Fence_Quality 
+
+### Change the factor class type to character class first 
+
+### Filling NA with No Fence 
+
+
+
+```{r}
+class(all$Fence_Quality) 
+all$Fence_Quality <- as.character(all$Fence_Quality) 
+all$Fence_Quality[is.na(all$Fence_Quality)] <- "No Fence"
+
+```
+
+## Replacing NA values with 'None' for Miscellaneous_Feature variable 
+### Check the class of the variable Fence 
+
+### Change the factor class type to character class first 
+ 
+### Filling NA with None 
+
+
+
+```{r}
+class(all$Miscellaneous_Feature) 
+all$Miscellaneous_Feature <- as.character(all$Miscellaneous_Feature)
+all$Miscellaneous_Feature[is.na(all$Miscellaneous_Feature)] <- "None"
+
+```
+
+## Replacing missing values in Lot_Extent with its median value 
+### Check the class of the variable Fence 
+
+### Lot_Extent is a continuous variable 
+### Filling missing values with median
+
+
+
+```{r}
+class(all$Lot_Extent) 
+all$Lot_Extent[is.na(all$Lot_Extent)] <- median(all$Lot_Extent, na.rm = TRUE)
+
+```
+
+## Using crosstab to generate the count of Brick_Veneer_Type by 
+### type of Brick_Veneer_Area 
+
+
+
+```{r}
+cross <- table(all$Brick_Veneer_Area,all$Brick_Veneer_Type) 
+
+head(cross) 
+cross_margin <- addmargins(cross)
+head(cross_margin,10) 
+
+```
+## It can be observed that that when MasVnrArea is zero, we have 
+### MasVnrType as None in the majority of cases
+### impute the missing values in Brick_Veneer_Type with None and Brick_Veneer_Area 
+### with zero 
+
+
+
+```{r}
+all$Brick_Veneer_Area[is.na(all$Brick_Veneer_Area)] <- 0 
+class(all$Brick_Veneer_Area)
+all$Miscellaneous_Feature <- as.character(all$Miscellaneous_Feature) 
+all$Brick_Veneer_Type[is.na(all$Brick_Veneer_Type)] <- "None"
+
+```
+
+## Let's see the distribution of the Electrical_System type by Building_Class 
+
+```{r}
+
+
+cross_elec <- table(all$Electrical_System,all$Building_Class) 
+cross_elec_margin <- addmargins(cross_elec) 
+
+head(cross_elec_margin,10) 
+class(all$Electrical_System) 
+all$Electrical_System <- as.character(all$Electrical_System) 
+all$Electrical_System[is.na(all$Electrical_System)] <- "SBrkr"
+str(all$Electrical_System)
+unique(all$Electrical_System)
+class(all$Electrical_System)
+
+```
+## see the numeric datatype varible names 
+
+
+```{r}
+
+numericVars <- which(sapply(all, is.numeric))
+numericVarsnames <- names(numericVars)
+numericVarsnames
+
+```
+## add library corrplot for the graph
+
+
+```{r}
+
+install.packages("corrplot")
+library(corrplot)
+
+all_numVar <- all[, numericVars]
+all_numVar
+cor(all_numVar$Total_Basement_Area, all_numVar$First_Floor_Area, use = "pairwise.complete.obs")
+cor_numVar <- cor(all_numVar, use = "pairwise.complete.obs") #correlations of all numeric variables 
+cor_numVar
+
+
+```
+
+## sort on decreasing correlations with Sale_Price 
+
+```{r}
+
+cor_sorted <- as.matrix(sort(cor_numVar[,"Sale_Price"], decreasing = T))
+cor_sorted
+
+```
+
+## we can use abs for +ive all the value and highly correaltion we consider (cor more then 0.5 highly correaltion)
+
+```{r}
+
+cor_high <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.5)))
+cor_high
+```
+
+
+# we are putting this in rows and colunm
+
+
+```{r}
+cor_numVar <- cor_numVar[cor_high, cor_high]
+head(cor_numVar)
+
+```
+
+# correlation plot we create 
+
+```{r}
+corrplot.mixed(cor_numVar, tl.pos = "lt", tl.col = "black")
+
+```
+
+## creating a modal
+### check summary of the modal
+
+```{r}
+modal <- lm(Sale_Price~., all)
+summary(modal)
+
+```
+
+## predict the Sale_Price with all the X-values 
+### pdct1 = predict(model1, test) 
+
+```{r}
+pdct1 = predict(modal) 
+cor(all$Sale_Price, all$Lot_Size, use = "pairwise.complete.obs") 
+length(pdct1) 
+pdct1 = predict(modal) 
+
+
+```
+
+
+# table showing the difference between the actual and predicted values 
+
+
+```{r}
+
+actual_Sale_Price = Train$Sale_Price 
+length(actual_Sale_Price) 
+
+```
+
+## we can crreate new varible for actual sales and prediction sales and add in singe Dataframe
+
+```{r}
+Actual=Train$Sale_Price 
+predictions=pdct1 
+
+DF= data.frame(Actual, pdct1) 
+
+head(DF) 
+
+```
+## here we calculate the differnce between predict and actual
+
+```{r}
+DF$Diff= DF$Actual-DF$pdct1 
+
+DF$pct=(DF$Diff/DF$Actual)*100 
+
+pred_Sale_Price = pdct1 
+difference = actual_Sale_Price - pred_Sale_Price 
+
+df_Sale_Price = data.frame(actual_Sale_Price, pred_Sale_Price,difference) 
+head(df_Sale_Price)
+
+
+```
+## as we see here not a major difference between predict and acutual so we can say property price will be depend on its price size area is good the price is high our model is good
+
+## here we find MAPE ( Mean absolute percentage error)
+
+```{r}
+
+mape <- mean(abs(difference)/actual_Sale_Price)
+mape
+
+```
+
+## 7% is very low MApe now its clearly shows...
